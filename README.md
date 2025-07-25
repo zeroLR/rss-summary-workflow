@@ -9,6 +9,4 @@ Use [n8n](https://github.com/n8n-io/n8n) to automatically generate daily summari
 
 ## Todo
 
-- [ ] Use github to manage ai model provider.
-- [ ] Use github to manage ai model.
-- [ ] Use github to manage ai prompt for each provider.
+- [ ] Use github to manage ai prompt for each model
