@@ -1,5 +1,6 @@
 {
   "rss": [
+    "https://code.visualstudio.com/feed.xml",
     "https://kubernetes.io/feed.xml",
     "https://github.blog/feed",
     "https://www.docker.com/feed",
