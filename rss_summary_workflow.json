@@ -1,0 +1,997 @@
+{
+  "name": "RSS Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3696,
+        -464
+      ],
+      "id": "3095d78f-75ed-4683-817d-e544e7048e71",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "function isDayBefore(dateString, day = 0) {\n  const inputDate = new Date(dateString);\n  const today = new Date();\n\n  const exceptDay = new Date(today);\n  exceptDay.setDate(today.getDate() - day);\n\n  return (\n    inputDate.getFullYear() === exceptDay.getFullYear() &&\n    inputDate.getMonth() === exceptDay.getMonth() &&\n    inputDate.getDate() === exceptDay.getDate()\n  );\n}\n\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nconst DAY_BEFORE_COUNT = 0;\nconst result = [];\nfor (const item of $input.all()) {\n  const itemPubDate = item.json.pubDate;\n  if(isDayBefore(itemPubDate, DAY_BEFORE_COUNT)){\n    result.push(item)\n  }\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2224,
+        -448
+      ],
+      "id": "5d3a4716-8cc7-4438-b306-f55c5703b480",
+      "name": "FilterByPubDate",
+      "alwaysOutputData": true,
+      "notesInFlow": true,
+      "notes": "TODO: improve date control by node instead value in script"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a38f3172-8a9b-40d1-b1e1-de3491ee5027",
+              "name": "contentSnippet",
+              "value": "={{ $json['content:encodedSnippet'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "selected",
+        "includeFields": "title,link,pubDate,contentSnippet",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1520,
+        -544
+      ],
+      "id": "edc26071-c588-439a-82f1-199702cc208e",
+      "name": "MappingWithEncodeContent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": []
+        },
+        "includeOtherFields": true,
+        "include": "selected",
+        "includeFields": "title,link,pubDate,contentSnippet",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1520,
+        -368
+      ],
+      "id": "cbabbd1b-2b72-432b-ab70-9e1820d4738e",
+      "name": "MappingContent"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1296,
+        -448
+      ],
+      "id": "8994ed5c-1344-4ec0-9fc0-44b8e6ef0542",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "choices[0].message.content",
+        "options": {
+          "fileName": "=tech-summary-{{$today.minus(1,'day').format('yyyy-MM-dd')}}.md"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        -448
+      ],
+      "id": "309ebd50-a6e6-49c0-a792-077e11c00b29",
+      "name": "Convert to File1",
+      "retryOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "ZLRWeb",
+          "mode": "list",
+          "cachedResultName": "ZLRWeb",
+          "cachedResultUrl": "https://github.com/ZLRWeb"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "zlrweb.github.io",
+          "mode": "list",
+          "cachedResultName": "zlrweb.github.io",
+          "cachedResultUrl": "https://github.com/ZLRWeb/zlrweb.github.io"
+        },
+        "filePath": "=blog/tech-info/summary_{{ $today.format('yyyy-MM-dd') }}.md",
+        "binaryData": true,
+        "commitMessage": "=feat: add summary_{{ $today.format('yyyy-MM-dd') }}.md"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        -448
+      ],
+      "id": "8c1e0fe5-9b7c-4f3a-87ab-65d26f92f93c",
+      "name": "GitHub1",
+      "webhookId": "37518a2c-1420-4a99-a71c-4f416acda4da",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "githubApi": {
+          "id": "kVlXsKdhvxkXN5VK",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "今日沒有新文章！",
+        "options": {
+          "username": "RSS_Summary",
+          "wait": true
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -1520,
+        -176
+      ],
+      "id": "391e4798-eece-4ce1-91c6-6c49de1c5e87",
+      "name": "Discord",
+      "webhookId": "db2aeb0d-a68a-4038-8156-9178eee7eb95",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "wn87jpEPsnue38qH",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=今日總結：https://notes.zerolr.net/tech-info/tech-summary-{{$today.minus(1,'day').format('yyyy-MM-dd') }}",
+        "options": {
+          "username": "RSS_Summary",
+          "wait": true
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        -448
+      ],
+      "id": "24fae270-c42c-4fdc-bfaf-16fce4298ca5",
+      "name": "Discord1",
+      "webhookId": "db2aeb0d-a68a-4038-8156-9178eee7eb95",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "wn87jpEPsnue38qH",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-NANO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "請根據以下指示生成 Markdown 技術摘要：\n\n1. 全文以繁體中文撰寫，並在開頭設置正確的 YAML Frontmatter（slug、title、authors: openai、依據內容自動生成英文 tags）。\n2. 每個主題以二級標題（##）呈現，標題需精簡明確。\n3. 每個主題段落前加入適合該內容的 emoji，讓分段更清晰。\n4. 每個主題下方加入來源網址（**Source:**），並以條列式總結該段內容重點。總結需涵蓋部分原始範例的上下文，包括程式碼片段和圖片（以 Markdown 語法插入）。\n5. 條列重點需具體、簡明，包含技術亮點、範例應用、實作流程等。\n6. summary 內容保留部分範例上下文、程式碼及圖片。\n7. 每篇文章最後一段需用 `<!-- truncate -->` 標籤分隔，之後再列出後續主題。\n8. tags 必須依據每個主題內容自動生成，並以英文表示。\n9. 請依據以下範例格式輸出(不包含 ```markdown)：\n\n```markdown\n---\nslug: tech-summary-2025-06-16\ntitle: TechSummary 2025-06-16\nauthors: openai\ntags: [AI, Technology, Summary]\n---\n\n# TechSummary 2025-06-16\n\n## 標題一 🚀\n\n**Source:** https://example.com\n\n- 重點1\n- 範例程式碼片段\n  ```python\n  print(\"Hello World\")\n  ```\n- 圖片說明 ![image1](image1)\n\n<!-- truncate -->\n\n## 標題二 💡\n\n**Source:** https://example.com\n\n- 重點2\n- 相關技術解析\n- 實作建議\n```\n\n**What Changed:**  \n• 明確分步說明，易於理解與操作  \n• 統一格式與條列式重點，標準化 emoji 分段  \n• 強化 tags 與 Frontmatter 自動化生成邏輯  \n• 明確要求範例程式碼及圖片嵌入  \n• 條列式呈現 summary，提升重點聚焦  \n• 嚴謹結構，便於多主題拓展與後續維護\n\n**Techniques Applied:**  \n• Constraint-based structuring  \n• Output spec layering  \n• Example-rich, context-preserving formatting\n\n**Pro Tip:**  \n可直接用於 ChatGPT 或 Claude，讓 AI 自動化生成高品質繁中技術摘要，適合周報、技術部落格、產品更新等場景。",
+              "role": "system"
+            },
+            {
+              "content": "- 你是一位專業且經驗豐富的 Tech Leader\n- 擅長以條列式方式整理文章\n- 擅長以表格來比較不同差異\n- 會從其他面向思考問題\n- 會根據文章內容，產生標題\n- 會在文章開頭會寫一小段內容簡介\n- 會在文章末端加上自己的看法\n- 會在文章末端加上參考來源連結",
+              "role": "assistant"
+            },
+            {
+              "content": "={{ $json.toJsonString() }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "options": {
+          "maxToolsIterations": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -880,
+        -448
+      ],
+      "id": "fb5db581-f123-4dca-b978-d88de8cd512e",
+      "name": "SummaryAssistant",
+      "credentials": {
+        "openAiApi": {
+          "id": "2vk62Pu2gdTfL9LX",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://raw.githubusercontent.com/ZLRWeb/zlrweb.github.io/refs/heads/main/blog/tech-info/summary_{{ $today.format('yyyy-MM-dd') }}.md",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3456,
+        -464
+      ],
+      "id": "9898f2fe-83a7-4212-987f-f828d42d3fcf",
+      "name": "CheckIsSummaryExists",
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "executeOnce": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "今日文章已存在！",
+        "options": {
+          "username": "RSS_Summary",
+          "wait": true
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -2608,
+        -864
+      ],
+      "id": "e23f78a1-3c85-4c89-adbc-db9e49fae04b",
+      "name": "Discord2",
+      "webhookId": "db2aeb0d-a68a-4038-8156-9178eee7eb95",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "wn87jpEPsnue38qH",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7155d172-e49c-43aa-b0fe-f9bf7e9075fb",
+              "leftValue": "={{ $json.error.status }}",
+              "rightValue": 404,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2976,
+        -464
+      ],
+      "id": "8a6eabf5-2c86-40a2-b2d2-89f629444ffd",
+      "name": "IsSummaryNotFound",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=未知錯誤: {{$json.toJsonString()}}",
+        "options": {
+          "username": "RSS_Summary",
+          "wait": true
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -2608,
+        -704
+      ],
+      "id": "47e49e99-33db-4e2d-b7b0-80e6f36b5899",
+      "name": "Discord3",
+      "webhookId": "db2aeb0d-a68a-4038-8156-9178eee7eb95",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "wn87jpEPsnue38qH",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "delete",
+        "owner": {
+          "__rl": true,
+          "value": "ZLRWeb",
+          "mode": "list",
+          "cachedResultName": "ZLRWeb",
+          "cachedResultUrl": "https://github.com/ZLRWeb"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "zlrweb.github.io",
+          "mode": "list",
+          "cachedResultName": "zlrweb.github.io",
+          "cachedResultUrl": "https://github.com/ZLRWeb/zlrweb.github.io"
+        },
+        "filePath": "=blog/tech-info/summary_{{ $today.format('yyyy-MM-dd') }}.md",
+        "commitMessage": "=chore: remove summary_{{ $today.format('yyyy-MM-dd') }}.md"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -3360,
+        -144
+      ],
+      "id": "b90ea7bf-9142-43ad-ace3-7b47893f8c33",
+      "name": "GitHub",
+      "webhookId": "44d51113-3db0-4e0b-80ff-712ce92eb7dd",
+      "credentials": {
+        "githubApi": {
+          "id": "kVlXsKdhvxkXN5VK",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "已刪除今日文章！",
+        "options": {
+          "username": "RSS_Summary",
+          "wait": true
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -3168,
+        -144
+      ],
+      "id": "5ea5cf4b-ff4e-4ce0-8e05-754531f91118",
+      "name": "Discord4",
+      "webhookId": "db2aeb0d-a68a-4038-8156-9178eee7eb95",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "wn87jpEPsnue38qH",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let result = \"\";\nconst now = new Date();\nconst tody = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;\nresult += `# TechSummary ${tody}\\n\\n`\n\n// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  const json = item.json;\n  const title = json.title;\n  const link = json.link;\n  const contentSnippet = json.contentSnippet;\n\n  result += `## ${title}\\n\\n`;\n  result += `**Source:** ${link}\\n\\n`;\n  result += `**Content:** ${contentSnippet}\\n\\n`;\n}\n\nreturn [{data: result}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        -448
+      ],
+      "id": "bdc3b86a-da55-4ac2-9c5d-ea2ef4ab4ae1",
+      "name": "MarkdownFormat"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.keys() }}",
+                    "rightValue": "content:encoded",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    },
+                    "id": "6e846b77-ff26-43d2-aefe-1e90fc7a77f5"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "content:encoded"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "04159c84-cfd4-4f51-a2a9-584142e65e69",
+                    "leftValue": "={{ $json.keys() }}",
+                    "rightValue": "content",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "content"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1856,
+        -448
+      ],
+      "id": "273ca944-f7de-410f-b227-759ee12ab696",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a96d1df6-c62a-4915-bee9-4b2a988b8e57",
+              "leftValue": "={{ $json.error.keys() }}",
+              "rightValue": "status",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3200,
+        -464
+      ],
+      "id": "e9b27db3-ddbf-489d-bcd5-226f6821507a",
+      "name": "hasErrorStatus",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4a9de9c0-9c3c-421b-a1cb-5b739a054ba4",
+              "leftValue": "={{ $json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2064,
+        -448
+      ],
+      "id": "2fb1bf20-f2f5-4803-9dc3-0bbeb79f12c9",
+      "name": "hasItem"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -2608,
+        -288
+      ],
+      "id": "b4f4904f-7428-4cb0-87c1-290e3e021d63",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/zeroLR/rss-summary-workflow/refs/heads/main/rss/feed.json",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2816,
+        -288
+      ],
+      "id": "15ab4d3b-d7bf-448a-b528-caa55a57cd0f",
+      "name": "GetMyRssList",
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "executeOnce": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{$json['body.rss']}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -2400,
+        -288
+      ],
+      "id": "5cb662e0-4855-4c76-acd0-d7d5261c7c81",
+      "name": "RSS",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=GetGithubRssListResponse: {{ $json.toJsonString() }}",
+        "options": {
+          "username": "RSS_Summary",
+          "wait": true
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -2608,
+        -448
+      ],
+      "id": "52e989eb-9f82-4df7-a727-e88d93da93f7",
+      "name": "Discord6",
+      "webhookId": "db2aeb0d-a68a-4038-8156-9178eee7eb95",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "wn87jpEPsnue38qH",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "請根據以下指示生成 Markdown 技術摘要：\n\n1. 全文以繁體中文撰寫，並在開頭設置正確的 YAML Frontmatter（slug、title、authors: gemini、依據內容自動生成英文 tags）。\n2. 每個主題以二級標題（##）呈現，標題需精簡明確。\n3. 每個主題段落前加入適合該內容的 emoji，讓分段更清晰。\n4. 每個主題下方加入來源網址（**Source:**），並以條列式總結該段內容重點。總結需涵蓋部分原始範例的上下文，包括程式碼片段（以 Markdown 語法插入）。\n5. 條列重點需具體、簡明，包含技術亮點、範例應用、實作流程等。\n6. summary 內容保留部分範例上下文、程式碼及圖片。\n7. 每篇文章最後一段需用 `<!-- truncate -->` 標籤分隔，之後再列出後續主題。\n8. tags 必須依據每個主題內容自動生成，並以英文表示。\n9. 請依據以下範例格式輸出(不包含 ```markdown)：\n\n---\nslug: tech-summary-2025-06-16\ntitle: TechSummary 2025-06-16\nauthors: gemini\ntags: [AI, Technology, Summary]\n---\n\n# TechSummary 2025-06-16\n\n## 標題一 🚀\n\n**Source:** https://example.com\n\n- 重點1\n- 範例程式碼片段\n  ```python\n  print(\"Hello World\")\n  ```\n\n<!-- truncate -->\n\n## 標題二 💡\n\n**Source:** https://example.com\n\n- 重點2\n- 相關技術解析\n- 實作建議\n```\n\n**What Changed:**  \n• 明確分步說明，易於理解與操作  \n• 統一格式與條列式重點，標準化 emoji 分段  \n• 強化 tags 與 Frontmatter 自動化生成邏輯  \n• 明確要求範例程式碼\n• 條列式呈現 summary，提升重點聚焦  \n• 嚴謹結構，便於多主題拓展與後續維護\n\n**Techniques Applied:**  \n• Constraint-based structuring  \n• Output spec layering  \n• Example-rich, context-preserving formatting\n\n**Pro Tip:**  \n可直接用於 Gemini 或 Claude，讓 AI 自動化生成高品質繁中技術摘要，適合周報、技術部落格、產品更新等場景。",
+              "role": "model"
+            },
+            {
+              "content": "={{ $json.toJsonString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        -240
+      ],
+      "id": "fd495b15-1cbf-4b31-8c5d-17511b72f6fb",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "uRgvJa5DRgomLqgn",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "content.parts[0].text",
+        "options": {
+          "fileName": "=tech-summary-{{$today.minus(1,'day').format('yyyy-MM-dd')}}.md"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        -240
+      ],
+      "id": "418cff46-06b3-4ce7-b6af-b643bbf57ce4",
+      "name": "Convert to File",
+      "retryOnFail": true,
+      "alwaysOutputData": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "CheckIsSummaryExists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FilterByPubDate": {
+      "main": [
+        [
+          {
+            "node": "hasItem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MappingWithEncodeContent": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MappingContent": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "GitHub1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "MarkdownFormat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub1": {
+      "main": [
+        [
+          {
+            "node": "Discord1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SummaryAssistant": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CheckIsSummaryExists": {
+      "main": [
+        [
+          {
+            "node": "Discord2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "hasErrorStatus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IsSummaryNotFound": {
+      "main": [
+        [
+          {
+            "node": "GetMyRssList",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub": {
+      "main": [
+        [
+          {
+            "node": "Discord4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MarkdownFormat": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "MappingWithEncodeContent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MappingContent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "hasErrorStatus": {
+      "main": [
+        [
+          {
+            "node": "IsSummaryNotFound",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "hasItem": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetMyRssList": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Discord6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS": {
+      "main": [
+        [
+          {
+            "node": "FilterByPubDate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "GitHub1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7dd2f5d2-c28c-42bc-a1de-2663f888b638",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dddea3398863ea74065e757ec3b8a01f34afaac24b626dedce09a2af6326e3d3"
+  },
+  "id": "SrSPrfrl8FV5qzD3",
+  "tags": []
+}
